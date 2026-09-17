@@ -1,6 +1,5 @@
 import Card from '../components/Card'
-import tools from '../data/tools'
-
+import tools from '../Data/tools'
 function ToolsSection() {
   return (
     <section className="px-4 py-16">
