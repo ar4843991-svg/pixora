@@ -11,7 +11,7 @@ import Footer from './components/Footer'
 import NotFound from './pages/NotFound'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
-
+import JpgToPdf from './tools/pdf/JpgToPdf'
 function App() {
   return (
     <BrowserRouter>
@@ -50,6 +50,11 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route
+
+  path="/tools/jpg-to-pdf"
+  element={<JpgToPdf />}
+/>
 
           </Routes>
         </main>

@@ -27,6 +27,13 @@ const tools = [
   icon: '🌐',
   action: 'Convert to WebP',
 },
+{
+  title: 'JPG to PDF',
+  slug: 'jpg-to-pdf',
+  description: 'Convert JPG and PNG images to PDF format.',
+  icon: '📄',
+  action: 'Convert to PDF',
+},
 ]
 
 export default tools
