@@ -1,0 +1,110 @@
+Pixora — Project Summary
+
+Bilkul ✅ ye Pixora ke core rules hain:
+
+🔐 Security-first
+🔎 SEO-friendly
+⚡ Fast & lightweight
+📱 Responsive
+🛡️ Privacy-focused
+♻️ Reusable architecture
+
+Pixora is a free, fast, and privacy-focused online image tools platform built with React.js and Tailwind CSS.
+It will provide useful tools such as image compression, resizing, conversion, cropping, and optimization.
+The project will focus on professional UI/UX, responsive design, strong SEO, performance, security, and
+browser-based image processing whenever possible. 
+Pixora will be monetized through traffic-based methods such as ads while keeping its core tools free for users.
+
+
+Free Creator Tools" — all-in-one website
+
+Ek website jahan user free mein chhote-chhote useful tools use kare:
+
+Image tools
+
+Image Compressor
+JPG → PNG
+PNG → JPG
+WebP Converter
+Image Resizer
+Image Cropper
+
+PDF tools
+
+PDF → Images
+Images → PDF
+PDF merger
+PDF compressor
+
+Developer tools
+
+JSON Formatter
+JSON Validator
+Base64 Encoder/Decoder
+URL Encoder/Decoder
+UUID Generator
+Color Converter
+JWT Decoder
+
+Text tools
+
+Word Counter
+Case Converter
+Remove Duplicate Lines
+Lorem Ipsum Generator
+
+Sabse achi baat: bohot se tools browser mein client-side React/JS se ban sakte hain, yani tumhein har operation ke liye expensive backend/API ki zaroorat nahi.
+
+
+
+
+
+
+What we will learn/build
+
+React.js fundamentals
+Tailwind CSS
+Component architecture
+Design systems
+Image processing in the browser
+Responsive UI/UX
+SEO
+Performance optimization
+Web security & privacy
+Routing and reusable components
+Deployment
+Analytics & monetization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+src/
+├── components/
+│   ├── Button.jsx
+│   ├── Card.jsx
+│   └── Navbar.jsx
+│
+├── sections/
+│   └── Hero.jsx
+│
+├── pages/
+├── layouts/
+├── tools/
+├── utils/
+├── App.jsx
+├── main.jsx
+└── index.css
