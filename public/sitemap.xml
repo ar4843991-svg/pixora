@@ -20,5 +20,8 @@
   <url>
     <loc>https://pixora-inzb.vercel.app/tools/webp-converter</loc>
   </url>
+    <url>
+    <loc>https://pixora-inzb.vercel.app/tools/jpg-to-pdf</loc>
+  </url>
 
 </urlset>
