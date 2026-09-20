@@ -1,25 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { jsPDF } from 'jspdf'
 import SEO from '../../components/SEO'
 
 function JpgToPdf() {
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
+  const [preview, setPreview] = useState(null)
+  const [isDragging, setIsDragging] = useState(false)
 
-  function handleFileChange(event) {
-    const selectedFile = event.target.files[0]
+function processFile(selectedFile) {
+  if (!selectedFile) return
 
-    if (!selectedFile) return
-
-    if (!['image/jpeg', 'image/png'].includes(selectedFile.type)) {
-      setError('Please select a JPG or PNG image.')
-      setFile(null)
-      return
-    }
-
-    setError('')
-    setFile(selectedFile)
+  if (!['image/jpeg', 'image/png'].includes(selectedFile.type)) {
+    setError('Please select a JPG or PNG image.')
+    setFile(null)
+    setPreview(null)
+    return
   }
+
+  if (selectedFile.size > 10 * 1024 * 1024) {
+    setError('Image must be smaller than 10 MB.')
+    setFile(null)
+    setPreview(null)
+    return
+  }
+
+  setError('')
+  setFile(selectedFile)
+  setPreview(URL.createObjectURL(selectedFile))
+}
+
+function handleFileChange(event) {
+  processFile(event.target.files[0])
+}
+
+function handleDrop(event) {
+  event.preventDefault()
+  setIsDragging(false)
+
+  processFile(event.dataTransfer.files[0])
+}
+  function handleDrop(event) {
+  event.preventDefault()
+  setIsDragging(false)
+
+  const droppedFile = event.dataTransfer.files[0]
+
+  if (!droppedFile) return
+
+  handleFileChange({
+    target: {
+      files: [droppedFile],
+    },
+  })
+}
 
   function handleConvert() {
     if (!file) return
@@ -29,7 +63,8 @@ function JpgToPdf() {
 
     image.onload = () => {
       const pdf = new jsPDF({
-        orientation: image.width > image.height ? 'landscape' : 'portrait',
+        orientation:
+          image.width > image.height ? 'landscape' : 'portrait',
         unit: 'px',
         format: [image.width, image.height],
       })
@@ -50,6 +85,14 @@ function JpgToPdf() {
     image.src = imageUrl
   }
 
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview)
+      }
+    }
+  }, [preview])
+
   return (
     <>
       <SEO
@@ -67,24 +110,54 @@ function JpgToPdf() {
             Convert your JPG and PNG images into a PDF file quickly and easily.
           </p>
 
-          <div className="mt-8 rounded-2xl border-2 border-dashed border-[#1D4533] bg-white p-10 text-center">
-            <label className="cursor-pointer">
-              <span className="font-medium text-[#1D4533]">
-                Choose an image
-              </span>
+<div
+  onDragOver={(event) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }}
+  onDragLeave={() => setIsDragging(false)}
+  onDrop={handleDrop}
+  className={`mt-8 rounded-2xl border-2 border-dashed p-10 text-center transition ${
+    isDragging
+      ? 'border-[#5E3122] bg-[#F9D2BA]'
+      : 'border-[#1D4533] bg-white'
+  }`}
+>            {!preview ? (
+              <label className="cursor-pointer">
+                <p className="mt-2 text-sm text-gray-500">
+  or drag and drop your image here
+</p>
 
-              <input
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div>
+                <img
+                  src={preview}
+                  alt="Selected image preview"
+                  className="mx-auto max-h-80 rounded-lg object-contain"
+                />
 
-            {file && (
-              <p className="mt-4 text-sm text-gray-600">
-                Selected: {file.name}
-              </p>
+                <p className="mt-4 text-sm text-gray-600">
+                  Selected: {file?.name}
+                </p>
+
+                <label className="mt-5 inline-block cursor-pointer rounded-lg border border-[#1D4533] px-5 py-3 font-medium text-[#1D4533] transition hover:bg-[#F9D2BA]">
+                  Choose Another Image
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             )}
 
             {error && (

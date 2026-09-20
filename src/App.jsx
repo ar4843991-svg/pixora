@@ -15,7 +15,7 @@ import JpgToPdf from './tools/pdf/JpgToPdf'
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-[#F7EAE0]">
+      <div className="min-h-screen  bg-[#F7EAE0]">
         <Navbar />
 
         <main>
