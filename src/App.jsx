@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 import JpgToPdf from './tools/pdf/JpgToPdf'
+import PdfToJpg from './tools/pdf/PdfToJpg'
 function App() {
   return (
     <BrowserRouter>
@@ -54,6 +55,11 @@ function App() {
 
   path="/tools/jpg-to-pdf"
   element={<JpgToPdf />}
+/>
+
+<Route
+  path="/tools/pdf-to-jpg"
+  element={<PdfToJpg />}
 />
 
           </Routes>

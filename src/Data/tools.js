@@ -34,6 +34,13 @@ const tools = [
   icon: '📄',
   action: 'Convert to PDF',
 },
+{
+  title: 'PDF to JPG',
+  slug: 'pdf-to-jpg',
+  description: 'Convert PDF pages into JPG images.',
+  icon: '🖼️',
+  action: 'Convert to JPG',
+},
 ]
 
 export default tools
