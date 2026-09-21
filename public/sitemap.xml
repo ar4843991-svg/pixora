@@ -6,6 +6,16 @@
   </url>
 
   <url>
+    <loc>https://pixora-inzb.vercel.app/about</loc>
+  </url>
+
+  <url>
+    <loc>https://pixora-inzb.vercel.app/privacy</loc>
+  </url>
+
+  <!-- Image Tools -->
+
+  <url>
     <loc>https://pixora-inzb.vercel.app/tools/image-compressor</loc>
   </url>
 
@@ -20,8 +30,23 @@
   <url>
     <loc>https://pixora-inzb.vercel.app/tools/webp-converter</loc>
   </url>
-    <url>
+
+  <!-- PDF Tools -->
+
+  <url>
     <loc>https://pixora-inzb.vercel.app/tools/jpg-to-pdf</loc>
+  </url>
+
+  <url>
+    <loc>https://pixora-inzb.vercel.app/tools/pdf-to-jpg</loc>
+  </url>
+
+  <url>
+    <loc>https://pixora-inzb.vercel.app/tools/pdf-to-png</loc>
+  </url>
+
+  <url>
+    <loc>https://pixora-inzb.vercel.app/tools/pdf-merger</loc>
   </url>
 
 </urlset>

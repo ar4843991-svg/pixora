@@ -7,6 +7,8 @@ function SEO({ title, description }) {
   return (
     <Helmet>
       {/* Basic SEO */}
+      <html lang="en" />
+
       <title>{title}</title>
 
       <meta
@@ -19,6 +21,11 @@ function SEO({ title, description }) {
         content="index, follow"
       />
 
+      <meta
+        name="googlebot"
+        content="index, follow"
+      />
+
       {/* Canonical */}
       <link
         rel="canonical"
@@ -26,6 +33,16 @@ function SEO({ title, description }) {
       />
 
       {/* Open Graph */}
+      <meta
+        property="og:locale"
+        content="en_US"
+      />
+
+      <meta
+        property="og:site_name"
+        content="Pixora"
+      />
+
       <meta
         property="og:title"
         content={title}
