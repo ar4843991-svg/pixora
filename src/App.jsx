@@ -13,6 +13,7 @@ import About from './pages/About'
 import Privacy from './pages/Privacy'
 import JpgToPdf from './tools/pdf/JpgToPdf'
 import PdfToJpg from './tools/pdf/PdfToJpg'
+import PdfToPng from './tools/pdf/PdfToPng'
 function App() {
   return (
     <BrowserRouter>
@@ -60,6 +61,10 @@ function App() {
 <Route
   path="/tools/pdf-to-jpg"
   element={<PdfToJpg />}
+/>
+<Route
+  path="/tools/pdf-to-png"
+  element={<PdfToPng />}
 />
 
           </Routes>

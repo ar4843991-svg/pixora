@@ -41,6 +41,14 @@ const tools = [
   icon: '🖼️',
   action: 'Convert to JPG',
 },
+{
+  title: 'PDF to PNG',
+  slug: 'pdf-to-png',
+  description: 'Convert PDF pages into PNG images.',
+  icon: '🖼️',
+  action: 'Convert to PNG',
+},
+
 ]
 
 export default tools
