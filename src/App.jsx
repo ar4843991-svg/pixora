@@ -14,6 +14,7 @@ import Privacy from './pages/Privacy'
 import JpgToPdf from './tools/pdf/JpgToPdf'
 import PdfToJpg from './tools/pdf/PdfToJpg'
 import PdfToPng from './tools/pdf/PdfToPng'
+import PdfMerger from './tools/pdf/PdfMerger'
 function App() {
   return (
     <BrowserRouter>
@@ -65,6 +66,10 @@ function App() {
 <Route
   path="/tools/pdf-to-png"
   element={<PdfToPng />}
+/>
+<Route
+  path="/tools/pdf-merger"
+  element={<PdfMerger />}
 />
 
           </Routes>

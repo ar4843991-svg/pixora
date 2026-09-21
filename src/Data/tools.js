@@ -48,6 +48,13 @@ const tools = [
   icon: '🖼️',
   action: 'Convert to PNG',
 },
+{
+  title: 'PDF Merger',
+  slug: 'pdf-merger',
+  description: 'Merge multiple PDF files into one PDF.',
+  icon: '📚',
+  action: 'Merge PDFs',
+},
 
 ]
 
