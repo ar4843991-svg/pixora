@@ -1,8 +1,41 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiImage, FiInfo, FiShield } from 'react-icons/fi'
+import {
+  FiImage,
+  FiInfo,
+  FiShield,
+  FiGrid,
+} from 'react-icons/fi'
 
 function Navbar() {
+  const location = useLocation()
+
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+
+    return location.pathname === path
+  }
+
+  const navItems = [
+    {
+      label: 'Tools',
+      path: '/tools',
+      icon: FiGrid,
+    },
+    {
+      label: 'About',
+      path: '/about',
+      icon: FiInfo,
+    },
+    {
+      label: 'Privacy',
+      path: '/privacy',
+      icon: FiShield,
+    },
+  ]
+
   return (
     <nav className="border-b border-[#F9D2BA] bg-[#F7EAE0]">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-6">
@@ -32,41 +65,38 @@ function Navbar() {
         <motion.div
           initial={{ opacity: 0, x: 15 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-          className="flex items-center gap-5 sm:gap-8"
+          transition={{
+            duration: 0.5,
+            delay: 0.1,
+            ease: 'easeOut',
+          }}
+          className="flex items-center gap-2 sm:gap-3"
         >
-          <Link
-            to="/"
-            className="group flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-[#1D4533]"
-          >
-            <FiImage
-              size={17}
-              className="transition-transform duration-200 group-hover:scale-110"
-            />
-            <span>Tools</span>
-          </Link>
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.path)
 
-          <Link
-            to="/about"
-            className="group flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-[#1D4533]"
-          >
-            <FiInfo
-              size={17}
-              className="transition-transform duration-200 group-hover:scale-110"
-            />
-            <span>About</span>
-          </Link>
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  active
+                    ? 'bg-white text-[#1D4533] shadow-sm'
+                    : 'text-gray-700 hover:bg-white/60 hover:text-[#1D4533]'
+                }`}
+              >
+                <Icon
+                  size={17}
+                  className="transition-transform duration-200 group-hover:scale-110"
+                />
 
-          <Link
-            to="/privacy"
-            className="group flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-[#1D4533]"
-          >
-            <FiShield
-              size={17}
-              className="transition-transform duration-200 group-hover:scale-110"
-            />
-            <span>Privacy</span>
-          </Link>
+                <span className="hidden sm:inline">
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
         </motion.div>
       </div>
     </nav>

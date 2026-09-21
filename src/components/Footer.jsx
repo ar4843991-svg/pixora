@@ -6,6 +6,7 @@ import {
   FiImage,
   FiInfo,
   FiShield,
+  FiGrid,
 } from 'react-icons/fi'
 
 function Footer() {
@@ -85,10 +86,13 @@ function Footer() {
             </p>
 
             <Link
-              to="/"
+              to="/tools"
               className="group mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#F7EAE0] transition-colors hover:text-[#F9D2BA]"
             >
+              <FiGrid size={16} />
+
               Explore all tools
+
               <FiArrowRight
                 size={16}
                 className="transition-transform duration-200 group-hover:translate-x-1"
@@ -180,6 +184,14 @@ function Footer() {
             </h2>
 
             <div className="mt-4 space-y-2">
+              <Link
+                to="/tools"
+                className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-[#F9D2BA] transition-all duration-200 hover:bg-[#F7EAE0]/10 hover:text-[#F7EAE0]"
+              >
+                <FiGrid size={16} />
+                <span>All Tools</span>
+              </Link>
+
               <Link
                 to="/about"
                 className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-[#F9D2BA] transition-all duration-200 hover:bg-[#F7EAE0]/10 hover:text-[#F7EAE0]"

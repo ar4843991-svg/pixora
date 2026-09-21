@@ -106,10 +106,11 @@ function Home() {
 
             <div className="mt-8">
               <Link
-                to="/"
-                className="group inline-flex items-center gap-2 font-semibold text-[#1D4533]"
+                to="/tools"
+                className="group inline-flex items-center gap-2 rounded-lg bg-[#1D4533] px-5 py-3 font-semibold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:opacity-90"
               >
                 Explore all Pixora tools
+
                 <FiArrowRight
                   size={18}
                   className="transition-transform duration-200 group-hover:translate-x-1"

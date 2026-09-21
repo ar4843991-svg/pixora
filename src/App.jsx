@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 
 import Home from './pages/Home'
+import Tools from './pages/Tools'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
 import NotFound from './pages/NotFound'
@@ -28,6 +29,7 @@ function App() {
           <Routes>
             {/* Main Pages */}
             <Route path="/" element={<Home />} />
+            <Route path="/tools" element={<Tools />} />
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<Privacy />} />
 

@@ -6,6 +6,7 @@ import {
   FiFileText,
   FiHome,
   FiImage,
+  FiLayers,
   FiSearch,
 } from 'react-icons/fi'
 
@@ -21,6 +22,8 @@ function NotFound() {
 
       <section className="flex min-h-[65vh] items-center px-4 py-16 sm:py-20">
         <div className="mx-auto w-full max-w-4xl">
+
+          {/* Main 404 Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,61 +44,85 @@ function NotFound() {
               <FiSearch size={28} />
             </motion.div>
 
-            {/* 404 */}
+            {/* 404 Number */}
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.15 }}
+              transition={{
+                duration: 0.45,
+                delay: 0.15,
+              }}
               className="mt-6 text-7xl font-bold tracking-tight text-[#5E3122] sm:text-8xl"
             >
               404
             </motion.p>
 
+            {/* Heading */}
             <motion.h1
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.2 }}
+              transition={{
+                duration: 0.45,
+                delay: 0.2,
+              }}
               className="mt-3 text-3xl font-bold text-[#1D4533] sm:text-4xl"
             >
               Page Not Found
             </motion.h1>
 
+            {/* Description */}
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.25 }}
+              transition={{
+                duration: 0.45,
+                delay: 0.25,
+              }}
               className="mx-auto mt-4 max-w-lg text-base leading-7 text-gray-600"
             >
               The page you are looking for does not exist or may have
-              been moved. You can return to Pixora or explore one of
-              our online tools.
+              been moved. You can return to Pixora or explore our
+              collection of online image and PDF tools.
             </motion.p>
 
             {/* Main Actions */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.3 }}
+              transition={{
+                duration: 0.45,
+                delay: 0.3,
+              }}
               className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
+              {/* Home */}
               <Link
                 to="/"
                 className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:w-auto"
               >
                 <FiHome size={18} />
+
                 Back to Home
+
                 <FiArrowRight
                   size={17}
                   className="transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
 
+              {/* Tools Hub */}
               <Link
-                to="/tools/image-compressor"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#1D4533] bg-white px-6 py-3 font-medium text-[#1D4533] transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 sm:w-auto"
+                to="/tools"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#1D4533] bg-white px-6 py-3 font-medium text-[#1D4533] transition duration-200 hover:-translate-y-0.5 hover:bg-gray-50 sm:w-auto"
               >
-                <FiImage size={18} />
+                <FiLayers size={18} />
+
                 Explore Tools
+
+                <FiArrowRight
+                  size={17}
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                />
               </Link>
             </motion.div>
           </motion.div>
@@ -111,8 +138,9 @@ function NotFound() {
             }}
             className="mt-12 grid gap-4 sm:grid-cols-2"
           >
+            {/* Image Tools */}
             <Link
-              to="/tools/image-compressor"
+              to="/tools"
               className="group rounded-2xl border border-[#F9D2BA] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
@@ -131,10 +159,20 @@ function NotFound() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Compress, resize and convert common image files.
+                Compress, resize and convert common image files with
+                Pixora's online image tools.
               </p>
+
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4533]">
+                View Image Tools
+                <FiArrowRight
+                  size={15}
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                />
+              </span>
             </Link>
 
+            {/* PDF Tools */}
             <Link
               to="/tools/pdf-merger"
               className="group rounded-2xl border border-[#F9D2BA] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
@@ -155,8 +193,17 @@ function NotFound() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                Convert PDF files and merge multiple documents.
+                Convert PDF files and merge multiple documents with
+                Pixora's browser-based PDF tools.
               </p>
+
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4533]">
+                Try PDF Merger
+                <FiArrowRight
+                  size={15}
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                />
+              </span>
             </Link>
           </motion.div>
 
@@ -164,7 +211,10 @@ function NotFound() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{
+              duration: 0.5,
+              delay: 0.5,
+            }}
             className="mt-8 text-center"
           >
             <Link
