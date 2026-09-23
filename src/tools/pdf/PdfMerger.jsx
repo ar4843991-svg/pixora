@@ -1,79 +1,99 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { PDFDocument } from 'pdf-lib'
 import {
+  FiArrowRight,
   FiCheckCircle,
   FiDownload,
-  FiFileText,
-  FiLayers,
+  FiImage,
+  FiInfo,
   FiRefreshCw,
   FiTrash2,
   FiUploadCloud,
+  FiZap,
 } from 'react-icons/fi'
 
-import SEO from '../../components/SEO'
+import ToolPageSEO from '../../components/ToolPageSEO'
 
-function PdfMerger() {
-  const [files, setFiles] = useState([])
+function ImageCompressor() {
+  const [file, setFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [quality, setQuality] = useState(0.8)
+  const [isCompressing, setIsCompressing] = useState(false)
+  const [compressedUrl, setCompressedUrl] = useState('')
+  const [compressedSize, setCompressedSize] = useState(0)
   const [error, setError] = useState('')
-  const [isMerging, setIsMerging] = useState(false)
-  const [mergedPdfUrl, setMergedPdfUrl] = useState('')
 
   useEffect(() => {
     return () => {
-      if (mergedPdfUrl) {
-        URL.revokeObjectURL(mergedPdfUrl)
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+
+      if (compressedUrl) {
+        URL.revokeObjectURL(compressedUrl)
       }
     }
-  }, [mergedPdfUrl])
+  }, [previewUrl, compressedUrl])
 
-  function validateFiles(selectedFiles) {
-    const invalidFile = selectedFiles.find(
-      (file) =>
-        file.type !== 'application/pdf' &&
-        !file.name.toLowerCase().endsWith('.pdf')
-    )
-
-    if (invalidFile) {
-      return 'Please select PDF files only.'
+  function validateFile(selectedFile) {
+    if (!selectedFile) {
+      return 'Please select an image file.'
     }
 
-    const tooLargeFile = selectedFiles.find(
-      (file) => file.size > 20 * 1024 * 1024
+    const supportedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ]
+
+    const hasSupportedExtension = /\.(jpe?g|png|webp)$/i.test(
+      selectedFile.name
     )
 
-    if (tooLargeFile) {
-      return 'Each PDF must be smaller than 20 MB.'
+    if (
+      !supportedTypes.includes(selectedFile.type) &&
+      !hasSupportedExtension
+    ) {
+      return 'Please select a JPG, PNG or WebP image.'
+    }
+
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      return 'Please select an image smaller than 20 MB.'
     }
 
     return ''
   }
 
-  function addFiles(selectedFiles) {
-    if (selectedFiles.length === 0) return
+  function handleFile(selectedFile) {
+    if (!selectedFile) return
 
-    const validationError = validateFiles(selectedFiles)
+    const validationError = validateFile(selectedFile)
 
     if (validationError) {
       setError(validationError)
       return
     }
 
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+
+    if (compressedUrl) {
+      URL.revokeObjectURL(compressedUrl)
+    }
+
+    setFile(selectedFile)
+    setPreviewUrl(URL.createObjectURL(selectedFile))
+    setCompressedUrl('')
+    setCompressedSize(0)
     setError('')
-
-    setFiles((previousFiles) => [
-      ...previousFiles,
-      ...selectedFiles,
-    ])
-
-    setMergedPdfUrl('')
   }
 
   function handleFileChange(event) {
-    const selectedFiles = Array.from(event.target.files)
+    const selectedFile = event.target.files?.[0]
 
-    addFiles(selectedFiles)
+    handleFile(selectedFile)
 
     event.target.value = ''
   }
@@ -81,142 +101,277 @@ function PdfMerger() {
   function handleDrop(event) {
     event.preventDefault()
 
-    const droppedFiles = Array.from(event.dataTransfer.files)
+    const droppedFile = event.dataTransfer.files?.[0]
 
-    addFiles(droppedFiles)
+    handleFile(droppedFile)
   }
 
   function handleDragOver(event) {
     event.preventDefault()
   }
 
-  function removeFile(indexToRemove) {
-    setFiles((previousFiles) =>
-      previousFiles.filter(
-        (_, index) => index !== indexToRemove
-      )
-    )
+  function removeFile() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
 
-    setMergedPdfUrl('')
+    if (compressedUrl) {
+      URL.revokeObjectURL(compressedUrl)
+    }
+
+    setFile(null)
+    setPreviewUrl('')
+    setCompressedUrl('')
+    setCompressedSize(0)
     setError('')
   }
 
-  async function mergePdfs() {
-    if (files.length < 2) {
-      setError('Please select at least 2 PDF files to merge.')
+  function getOutputType() {
+    if (!file) return 'image/jpeg'
+
+    if (file.type === 'image/png') {
+      return 'image/png'
+    }
+
+    if (file.type === 'image/webp') {
+      return 'image/webp'
+    }
+
+    return 'image/jpeg'
+  }
+
+  function getOutputExtension() {
+    const outputType = getOutputType()
+
+    if (outputType === 'image/png') {
+      return 'png'
+    }
+
+    if (outputType === 'image/webp') {
+      return 'webp'
+    }
+
+    return 'jpg'
+  }
+
+  async function compressImage() {
+    if (!file || !previewUrl) {
+      setError('Please select an image first.')
       return
     }
 
-    setIsMerging(true)
+    setIsCompressing(true)
     setError('')
-    setMergedPdfUrl('')
+
+    if (compressedUrl) {
+      URL.revokeObjectURL(compressedUrl)
+    }
+
+    setCompressedUrl('')
+    setCompressedSize(0)
 
     try {
-      const mergedPdf = await PDFDocument.create()
+      const image = new Image()
 
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer()
+      image.src = previewUrl
 
-        const sourcePdf = await PDFDocument.load(arrayBuffer)
-
-        const copiedPages = await mergedPdf.copyPages(
-          sourcePdf,
-          sourcePdf.getPageIndices()
-        )
-
-        copiedPages.forEach((page) => {
-          mergedPdf.addPage(page)
-        })
-      }
-
-      const mergedPdfBytes = await mergedPdf.save()
-
-      const blob = new Blob([mergedPdfBytes], {
-        type: 'application/pdf',
+      await new Promise((resolve, reject) => {
+        image.onload = resolve
+        image.onerror = reject
       })
 
-      const pdfUrl = URL.createObjectURL(blob)
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')
 
-      setMergedPdfUrl(pdfUrl)
+      if (!context) {
+        throw new Error('Canvas is not supported.')
+      }
+
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+
+      context.drawImage(
+        image,
+        0,
+        0,
+        image.naturalWidth,
+        image.naturalHeight
+      )
+
+      const outputType = getOutputType()
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(
+          resolve,
+          outputType,
+          outputType === 'image/png'
+            ? undefined
+            : quality
+        )
+      })
+
+      if (!blob) {
+        throw new Error(
+          'Could not create compressed image.'
+        )
+      }
+
+      const url = URL.createObjectURL(blob)
+
+      setCompressedUrl(url)
+      setCompressedSize(blob.size)
     } catch (err) {
-      console.error('PDF merge error:', err)
+      console.error('Image compression error:', err)
 
       setError(
-        'Could not merge the PDF files. Please make sure the files are valid PDFs and try again.'
+        'Could not compress this image. Please try another image file.'
       )
     } finally {
-      setIsMerging(false)
+      setIsCompressing(false)
     }
   }
 
-  function downloadMergedPdf() {
-    if (!mergedPdfUrl) return
+  function downloadCompressedImage() {
+    if (!compressedUrl || !file) return
 
     const link = document.createElement('a')
 
-    link.href = mergedPdfUrl
-    link.download = 'pixora-merged.pdf'
+    link.href = compressedUrl
+    link.download = `pixora-compressed.${getOutputExtension()}`
 
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  function resetMerger() {
-    if (mergedPdfUrl) {
-      URL.revokeObjectURL(mergedPdfUrl)
+  function resetCompressor() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
     }
 
-    setFiles([])
+    if (compressedUrl) {
+      URL.revokeObjectURL(compressedUrl)
+    }
+
+    setFile(null)
+    setPreviewUrl('')
+    setCompressedUrl('')
+    setCompressedSize(0)
+    setQuality(0.8)
+    setIsCompressing(false)
     setError('')
-    setIsMerging(false)
-    setMergedPdfUrl('')
   }
 
-  const totalSize = files.reduce(
-    (total, file) => total + file.size,
-    0
-  )
+  function formatFileSize(size) {
+    if (!size) {
+      return '0 KB'
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`
+  }
+
+  const compressionPercentage =
+    file && compressedSize > 0
+      ? Math.max(
+          0,
+          Math.round(
+            ((file.size - compressedSize) / file.size) * 100
+          )
+        )
+      : 0
 
   return (
     <>
-      <SEO
-        title="PDF Merger Online | Merge PDF Files Free | Pixora"
-        description="Merge multiple PDF files into one PDF online for free with Pixora. Combine PDF documents directly in your browser without installing software."
+      <ToolPageSEO
+        title="Image Compressor"
+        description="Compress JPG, PNG and WebP images online for free with Pixora. Reduce image file size directly in your browser while keeping good image quality."
       />
 
       <section className="px-4 py-14 sm:py-18 lg:py-20">
         <div className="mx-auto max-w-4xl">
+
+          {/* Breadcrumb */}
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.35,
+            }}
+            className="mb-6"
+          >
+            <Link
+              to="/tools"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#1D4533] hover:underline"
+            >
+              <FiArrowRight
+                size={15}
+                className="rotate-180"
+              />
+
+              All Tools
+            </Link>
+          </motion.div>
+
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.5,
+              ease: 'easeOut',
+            }}
             className="text-center"
           >
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1D4533] text-white shadow-sm">
-              <FiLayers size={27} />
+              <FiZap size={27} />
             </div>
 
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#1D4533] sm:text-4xl">
-              Merge PDF Files Online
+              Compress Images Online
             </h1>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
-              Combine multiple PDF files into one document quickly and
-              easily — directly in your browser.
+              Reduce image file size quickly while keeping your
+              images looking clear and useful.
             </p>
           </motion.div>
 
           {/* Main Tool */}
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.1, ease: 'easeOut' }}
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.55,
+              delay: 0.1,
+              ease: 'easeOut',
+            }}
             className="mt-10 rounded-2xl border border-[#F9D2BA] bg-white p-5 shadow-sm sm:p-8"
           >
+
             {/* Upload Area */}
-            {!mergedPdfUrl && (
+            {!file && (
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -227,29 +382,29 @@ function PdfMerger() {
                 </div>
 
                 <h2 className="mt-5 text-xl font-semibold text-[#1D4533]">
-                  Upload your PDF files
+                  Upload your image
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Drag and drop your files here, or choose them from
+                  Drag and drop your image here, or choose it from
                   your device.
                 </p>
 
                 <label className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:opacity-90">
                   <FiUploadCloud size={18} />
-                  Choose PDF Files
+
+                  Choose Image
 
                   <input
                     type="file"
-                    accept="application/pdf,.pdf"
-                    multiple
+                    accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                     onChange={handleFileChange}
                     className="hidden"
                   />
                 </label>
 
                 <p className="mt-4 text-xs text-gray-500">
-                  PDF files only · Maximum 20 MB per file
+                  JPG, PNG or WebP · Maximum 20 MB
                 </p>
               </div>
             )}
@@ -257,114 +412,146 @@ function PdfMerger() {
             {/* Error */}
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{
+                  opacity: 0,
+                  y: 8,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
                 className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
               >
                 {error}
               </motion.div>
             )}
 
-            {/* Selected Files */}
-            {files.length > 0 && !mergedPdfUrl && (
+            {/* Selected Image */}
+            {file && !compressedUrl && (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8"
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-[#1D4533]">
-                      Selected PDF Files
+                      Selected Image
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Files will be merged in the order shown below.
+                      Adjust the quality and compress your image.
                     </p>
                   </div>
 
                   <span className="w-fit rounded-full bg-[#F7EAE0] px-3 py-1 text-sm font-medium text-[#1D4533]">
-                    {files.length}{' '}
-                    {files.length === 1 ? 'file' : 'files'}
+                    {formatFileSize(file.size)}
                   </span>
                 </div>
 
-                <div className="mt-5 space-y-3">
-                  {files.map((file, index) => (
-                    <motion.div
-                      key={`${file.name}-${index}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#1D4533] shadow-sm">
-                        <FiFileText size={18} />
+                {/* Image Preview */}
+                <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex min-h-56 items-center justify-center p-4 sm:min-h-72">
+                    <img
+                      src={previewUrl}
+                      alt={`Preview of ${file.name}`}
+                      className="max-h-72 max-w-full rounded-lg object-contain"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-3 border-t border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F7EAE0] text-[#1D4533]">
+                        <FiImage size={18} />
                       </div>
 
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0">
                         <p className="break-words text-sm font-medium text-gray-700">
                           {file.name}
                         </p>
 
                         <p className="mt-1 text-xs text-gray-500">
-                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                          Original size: {formatFileSize(file.size)}
                         </p>
                       </div>
+                    </div>
 
-                      <span className="hidden shrink-0 text-sm font-semibold text-[#1D4533] sm:block">
-                        #{index + 1}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-red-50 hover:text-red-600"
-                        aria-label={`Remove ${file.name}`}
-                      >
-                        <FiTrash2 size={17} />
-                      </button>
-                    </motion.div>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg text-gray-500 transition hover:bg-red-50 hover:text-red-600 sm:self-auto"
+                      aria-label="Remove selected image"
+                    >
+                      <FiTrash2 size={17} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Summary */}
-                <div className="mt-5 flex flex-col gap-2 rounded-xl bg-[#F7EAE0] px-4 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
-                  <span>
-                    Total size:{' '}
-                    <strong className="text-[#1D4533]">
-                      {(totalSize / (1024 * 1024)).toFixed(2)} MB
-                    </strong>
-                  </span>
+                {/* Compression Quality */}
+                <div className="mt-6 rounded-xl bg-[#F7EAE0] px-4 py-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold text-[#1D4533]">
+                        Compression Quality
+                      </p>
 
-                  <span>
-                    {files.length < 2
-                      ? 'Add at least one more PDF'
-                      : 'Ready to merge'}
-                  </span>
+                      <p className="mt-1 text-xs text-gray-600">
+                        Higher quality keeps more image detail.
+                      </p>
+                    </div>
+
+                    <span className="w-fit rounded-full bg-white px-3 py-1 text-sm font-semibold text-[#1D4533] shadow-sm">
+                      {Math.round(quality * 100)}%
+                    </span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0.3"
+                    max="1"
+                    step="0.05"
+                    value={quality}
+                    onChange={(event) =>
+                      setQuality(Number(event.target.value))
+                    }
+                    className="mt-5 w-full accent-[#1D4533]"
+                    aria-label="Compression quality"
+                  />
+
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>Smaller file</span>
+                    <span>Higher quality</span>
+                  </div>
                 </div>
 
-                {/* Merge Button */}
+                {/* Compress Button */}
                 <motion.button
                   type="button"
-                  onClick={mergePdfs}
-                  disabled={isMerging || files.length < 2}
+                  onClick={compressImage}
+                  disabled={isCompressing}
                   whileHover={
-                    !isMerging && files.length >= 2
+                    !isCompressing
                       ? { y: -2 }
                       : {}
                   }
                   whileTap={
-                    !isMerging && files.length >= 2
+                    !isCompressing
                       ? { scale: 0.98 }
                       : {}
                   }
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3.5 font-medium text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isMerging ? (
+                  {isCompressing ? (
                     <>
                       <motion.span
-                        animate={{ rotate: 360 }}
+                        animate={{
+                          rotate: 360,
+                        }}
                         transition={{
                           duration: 1,
                           repeat: Infinity,
@@ -374,30 +561,38 @@ function PdfMerger() {
                         <FiRefreshCw size={18} />
                       </motion.span>
 
-                      Merging PDFs...
+                      Compressing Image...
                     </>
                   ) : (
                     <>
-                      <FiLayers size={18} />
-                      Merge {files.length >= 2 ? `${files.length} PDFs` : 'PDFs'}
+                      <FiZap size={18} />
+                      Compress Image
                     </>
                   )}
                 </motion.button>
 
-                {isMerging && (
+                {isCompressing && (
                   <p className="mt-4 text-center text-sm text-gray-500">
-                    Please wait while your PDF files are being merged.
+                    Please wait while your image is being compressed.
                   </p>
                 )}
               </motion.div>
             )}
 
             {/* Success */}
-            {mergedPdfUrl && (
+            {compressedUrl && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
+                initial={{
+                  opacity: 0,
+                  scale: 0.98,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                transition={{
+                  duration: 0.4,
+                }}
                 className="py-4 text-center sm:py-6"
               >
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#1D4533] text-white shadow-sm">
@@ -405,33 +600,81 @@ function PdfMerger() {
                 </div>
 
                 <h2 className="mt-5 text-2xl font-bold text-[#1D4533]">
-                  PDFs Merged Successfully
+                  Image Compressed Successfully
                 </h2>
 
                 <p className="mx-auto mt-2 max-w-lg leading-7 text-gray-600">
-                  Your {files.length} PDF files have been combined into
-                  one document.
+                  Your compressed image is ready to download.
                 </p>
 
+                {/* Result Stats */}
+                <div className="mx-auto mt-7 grid max-w-xl gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl bg-[#F7EAE0] p-4">
+                    <p className="text-xs text-gray-500">
+                      Original
+                    </p>
+
+                    <p className="mt-1 font-semibold text-[#1D4533]">
+                      {formatFileSize(file?.size)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F7EAE0] p-4">
+                    <p className="text-xs text-gray-500">
+                      Compressed
+                    </p>
+
+                    <p className="mt-1 font-semibold text-[#1D4533]">
+                      {formatFileSize(compressedSize)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F7EAE0] p-4">
+                    <p className="text-xs text-gray-500">
+                      Reduction
+                    </p>
+
+                    <p className="mt-1 font-semibold text-[#1D4533]">
+                      {compressionPercentage}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Compressed Preview */}
+                <div className="mt-7 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex min-h-56 items-center justify-center p-4 sm:min-h-72">
+                    <img
+                      src={compressedUrl}
+                      alt="Compressed image preview"
+                      className="max-h-72 max-w-full rounded-lg object-contain"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions */}
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <motion.button
                     type="button"
-                    onClick={downloadMergedPdf}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    onClick={downloadCompressedImage}
+                    whileHover={{
+                      y: -2,
+                    }}
+                    whileTap={{
+                      scale: 0.98,
+                    }}
                     className="flex items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
                   >
                     <FiDownload size={18} />
-                    Download Merged PDF
+                    Download Compressed Image
                   </motion.button>
 
                   <button
                     type="button"
-                    onClick={resetMerger}
+                    onClick={resetCompressor}
                     className="flex items-center justify-center gap-2 rounded-lg border border-[#1D4533] px-6 py-3 font-medium text-[#1D4533] transition hover:bg-gray-50"
                   >
                     <FiRefreshCw size={18} />
-                    Merge Another Set
+                    Compress Another Image
                   </button>
                 </div>
               </motion.div>
@@ -440,48 +683,70 @@ function PdfMerger() {
 
           {/* SEO Content */}
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.5 }}
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+            transition={{
+              duration: 0.5,
+            }}
             className="mt-12 rounded-2xl border border-[#F9D2BA] bg-white p-6 shadow-sm sm:p-8"
           >
             <h2 className="text-2xl font-bold text-[#1D4533]">
-              Merge PDF Files Online
+              Compress Images Online
             </h2>
 
             <p className="mt-4 leading-7 text-gray-600">
-              Pixora's PDF merger lets you combine multiple PDF documents
-              into a single file directly in your browser. Upload your
-              PDFs, review the file order and merge them into one document
-              without installing additional software.
+              Pixora's image compressor helps reduce the file size of
+              JPG, PNG and WebP images directly in your browser. Smaller
+              image files can be easier to upload, share and store while
+              keeping useful image quality.
             </p>
 
             <h3 className="mt-8 text-xl font-semibold text-[#1D4533]">
-              How to Merge PDFs
+              How to Compress an Image
             </h3>
 
             <ol className="mt-4 space-y-3 text-gray-600">
               <li>
-                <span className="font-semibold text-[#1D4533]">1.</span>{' '}
-                Select two or more PDF files.
+                <span className="font-semibold text-[#1D4533]">
+                  1.
+                </span>{' '}
+                Select a JPG, PNG or WebP image.
               </li>
+
               <li>
-                <span className="font-semibold text-[#1D4533]">2.</span>{' '}
-                Review the files you selected.
+                <span className="font-semibold text-[#1D4533]">
+                  2.
+                </span>{' '}
+                Choose your preferred compression quality.
               </li>
+
               <li>
-                <span className="font-semibold text-[#1D4533]">3.</span>{' '}
-                Click the merge button to combine them.
+                <span className="font-semibold text-[#1D4533]">
+                  3.
+                </span>{' '}
+                Click the compress button.
               </li>
+
               <li>
-                <span className="font-semibold text-[#1D4533]">4.</span>{' '}
-                Download your merged PDF.
+                <span className="font-semibold text-[#1D4533]">
+                  4.
+                </span>{' '}
+                Download your compressed image.
               </li>
             </ol>
 
             <h3 className="mt-8 text-xl font-semibold text-[#1D4533]">
-              Why Use Pixora PDF Merger?
+              Why Compress Images?
             </h3>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -490,8 +755,9 @@ function PdfMerger() {
                   className="mt-0.5 shrink-0 text-[#1D4533]"
                   size={18}
                 />
+
                 <p className="text-sm leading-6 text-gray-700">
-                  Combine multiple PDF files into one document.
+                  Reduce image file sizes for easier sharing.
                 </p>
               </div>
 
@@ -500,8 +766,9 @@ function PdfMerger() {
                   className="mt-0.5 shrink-0 text-[#1D4533]"
                   size={18}
                 />
+
                 <p className="text-sm leading-6 text-gray-700">
-                  Review your selected files before merging.
+                  Make images easier to upload and store.
                 </p>
               </div>
 
@@ -510,8 +777,9 @@ function PdfMerger() {
                   className="mt-0.5 shrink-0 text-[#1D4533]"
                   size={18}
                 />
+
                 <p className="text-sm leading-6 text-gray-700">
-                  Remove individual files before processing.
+                  Adjust compression quality before processing.
                 </p>
               </div>
 
@@ -520,91 +788,148 @@ function PdfMerger() {
                   className="mt-0.5 shrink-0 text-[#1D4533]"
                   size={18}
                 />
+
                 <p className="text-sm leading-6 text-gray-700">
-                  Works directly in your browser.
+                  Compress images directly in your browser.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#F9D2BA] bg-[#F7EAE0]/60 p-4">
+              <FiInfo
+                className="mt-0.5 shrink-0 text-[#1D4533]"
+                size={18}
+              />
+
+              <p className="text-sm leading-6 text-gray-700">
+                Compression results can vary depending on the image
+                format, dimensions and original file size.
+              </p>
             </div>
           </motion.section>
 
           {/* Related Tools */}
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.5 }}
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+            transition={{
+              duration: 0.5,
+            }}
             className="mt-12"
           >
             <div className="text-center">
               <h2 className="text-2xl font-bold text-[#1D4533]">
-                More PDF Tools
+                More Image Tools
               </h2>
 
               <p className="mt-2 text-gray-600">
-                Try more useful PDF tools from Pixora.
+                Try more useful image tools from Pixora.
               </p>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
+
+              {/* Image Resizer */}
               <Link
-                to="/tools/jpg-to-pdf"
-                className="rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                to="/tools/image-resizer"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <FiFileText
+                <FiImage
                   className="mx-auto text-[#1D4533]"
                   size={24}
                 />
 
                 <h3 className="mt-3 font-semibold text-[#1D4533]">
-                  JPG to PDF
+                  Image Resizer
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Convert images into PDF files.
+                  Resize images to your preferred dimensions.
                 </p>
+
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
 
+              {/* JPG to PNG */}
               <Link
-                to="/tools/pdf-to-jpg"
-                className="rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                to="/tools/jpg-to-png"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <FiFileText
+                <FiImage
                   className="mx-auto text-[#1D4533]"
                   size={24}
                 />
 
                 <h3 className="mt-3 font-semibold text-[#1D4533]">
-                  PDF to JPG
+                  JPG to PNG
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Convert PDF pages to JPG images.
+                  Convert JPG images to PNG format.
                 </p>
+
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
 
+              {/* WebP Converter */}
               <Link
-                to="/tools/pdf-to-png"
-                className="rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                to="/tools/webp-converter"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <FiFileText
+                <FiImage
                   className="mx-auto text-[#1D4533]"
                   size={24}
                 />
 
                 <h3 className="mt-3 font-semibold text-[#1D4533]">
-                  PDF to PNG
+                  WebP Converter
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Convert PDF pages to PNG images.
+                  Convert images to the WebP format.
                 </p>
+
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
+
             </div>
           </motion.section>
+
         </div>
       </section>
     </>
   )
 }
 
-export default PdfMerger
+export default ImageCompressor

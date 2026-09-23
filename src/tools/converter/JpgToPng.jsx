@@ -1,34 +1,121 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
+  FiArrowRight,
   FiCheckCircle,
   FiDownload,
   FiImage,
+  FiInfo,
   FiRefreshCw,
+  FiTrash2,
+  FiUploadCloud,
 } from 'react-icons/fi'
 
-import ImageUploader from '../../components/ImageUploader'
-import SEO from '../../components/SEO'
+import ToolPageSEO from '../../components/ToolPageSEO'
 
 function JpgToPng() {
   const [file, setFile] = useState(null)
-  const [convertedFile, setConvertedFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [convertedUrl, setConvertedUrl] = useState('')
+  const [convertedSize, setConvertedSize] = useState(0)
   const [isConverting, setIsConverting] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+
+      if (convertedUrl) {
+        URL.revokeObjectURL(convertedUrl)
+      }
+    }
+  }, [previewUrl, convertedUrl])
+
+  function validateFile(selectedFile) {
+    if (!selectedFile) {
+      return 'Please select a JPG image.'
+    }
+
+    const isJpgType =
+      selectedFile.type === 'image/jpeg'
+
+    const isJpgExtension =
+      /\.(jpe?g)$/i.test(selectedFile.name)
+
+    if (!isJpgType && !isJpgExtension) {
+      return 'Please select a JPG or JPEG image.'
+    }
+
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      return 'Please select an image smaller than 20 MB.'
+    }
+
+    return ''
+  }
+
+  function selectFile(selectedFile) {
+    if (!selectedFile) return
+
+    const validationError = validateFile(selectedFile)
+
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+
+    if (convertedUrl) {
+      URL.revokeObjectURL(convertedUrl)
+    }
+
+    setFile(selectedFile)
+    setPreviewUrl(URL.createObjectURL(selectedFile))
+    setConvertedUrl('')
+    setConvertedSize(0)
+    setError('')
+  }
+
+  function handleFileChange(event) {
+    const selectedFile = event.target.files?.[0]
+
+    selectFile(selectedFile)
+
+    event.target.value = ''
+  }
+
+  function handleDrop(event) {
+    event.preventDefault()
+
+    const droppedFile = event.dataTransfer.files?.[0]
+
+    selectFile(droppedFile)
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault()
+  }
+
   async function convertToPng() {
-    if (!file) return
+    if (!file || !previewUrl) {
+      setError('Please select a JPG image first.')
+      return
+    }
+
+    setIsConverting(true)
+    setConvertedUrl('')
+    setConvertedSize(0)
+    setError('')
 
     try {
-      setIsConverting(true)
-      setConvertedFile(null)
-      setError('')
-
       const image = new Image()
-      const imageUrl = URL.createObjectURL(file)
 
-      image.src = imageUrl
+      image.src = previewUrl
 
       await new Promise((resolve, reject) => {
         image.onload = resolve
@@ -36,17 +123,16 @@ function JpgToPng() {
       })
 
       const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
+      const context = canvas.getContext('2d')
 
-      if (!ctx) {
-        URL.revokeObjectURL(imageUrl)
-        throw new Error('Canvas is not supported')
+      if (!context) {
+        throw new Error('Canvas is not supported.')
       }
 
       canvas.width = image.naturalWidth
       canvas.height = image.naturalHeight
 
-      ctx.drawImage(
+      context.drawImage(
         image,
         0,
         0,
@@ -58,306 +144,663 @@ function JpgToPng() {
         canvas.toBlob(resolve, 'image/png')
       })
 
-      URL.revokeObjectURL(imageUrl)
-
       if (!pngBlob) {
-        throw new Error('Conversion failed')
+        throw new Error('Conversion failed.')
       }
 
-      setConvertedFile(pngBlob)
-    } catch (error) {
-      console.error('Conversion failed:', error)
-      setError('Something went wrong. Please try again.')
+      const resultUrl = URL.createObjectURL(pngBlob)
+
+      setConvertedUrl(resultUrl)
+      setConvertedSize(pngBlob.size)
+    } catch (err) {
+      console.error('JPG to PNG conversion error:', err)
+
+      setError(
+        'Could not convert this image. Please try another JPG file.'
+      )
     } finally {
       setIsConverting(false)
     }
   }
 
-  function handleDownload() {
-    if (!convertedFile) return
+  function downloadPng() {
+    if (!convertedUrl || !file) return
 
-    const downloadUrl = URL.createObjectURL(convertedFile)
     const link = document.createElement('a')
 
-    link.href = downloadUrl
+    link.href = convertedUrl
     link.download = 'pixora-converted.png'
-    link.click()
 
-    URL.revokeObjectURL(downloadUrl)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  function removeFile() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+
+    if (convertedUrl) {
+      URL.revokeObjectURL(convertedUrl)
+    }
+
+    setFile(null)
+    setPreviewUrl('')
+    setConvertedUrl('')
+    setConvertedSize(0)
+    setError('')
+  }
+
+  function resetConverter() {
+    removeFile()
+    setIsConverting(false)
+  }
+
+  function formatFileSize(size) {
+    if (!size) {
+      return '0 KB'
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`
   }
 
   return (
     <>
-      <SEO
-        title="JPG to PNG Converter Online | Pixora"
-        description="Convert JPG images to PNG online for free with Pixora. Fast, simple and browser-based JPG to PNG conversion."
+      <ToolPageSEO
+        title="JPG to PNG Converter"
+        description="Convert JPG and JPEG images to PNG online for free with Pixora. Convert images directly in your browser while keeping the original dimensions."
       />
 
-      <section className="px-4 py-16 sm:py-20">
-        <div className="mx-auto max-w-5xl">
+      <section className="px-4 py-14 sm:py-18 lg:py-20">
+        <div className="mx-auto max-w-4xl">
 
-          {/* Page Header */}
+          {/* Breadcrumb */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            initial={{
+              opacity: 0,
+              y: 10,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.35,
+            }}
+            className="mb-6"
+          >
+            <Link
+              to="/tools"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#1D4533] hover:underline"
+            >
+              <FiArrowRight
+                size={15}
+                className="rotate-180"
+              />
+
+              All Tools
+            </Link>
+          </motion.div>
+
+          {/* Header */}
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.5,
+              ease: 'easeOut',
+            }}
             className="text-center"
           >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7EAE0] text-[#1D4533]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1D4533] text-white shadow-sm">
               <FiImage size={27} />
             </div>
 
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-[#1D4533] sm:text-5xl">
+            <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#1D4533] sm:text-4xl">
               JPG to PNG Converter
             </h1>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
-              Convert JPG images to PNG format online with a simple
-              browser-based tool.
+              Convert JPG images to PNG format quickly and easily
+              directly in your browser.
             </p>
           </motion.div>
 
-          {/* Tool */}
+          {/* Main Tool */}
           <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
             transition={{
-              duration: 0.6,
-              delay: 0.15,
+              duration: 0.55,
+              delay: 0.1,
               ease: 'easeOut',
             }}
             className="mt-10 rounded-2xl border border-[#F9D2BA] bg-white p-5 shadow-sm sm:p-8"
           >
-            <ImageUploader
-              accept="image/jpeg"
-              label="Choose a JPG image"
-              allowedTypes={['image/jpeg']}
-              onFileSelect={(selectedFile) => {
-                setFile(selectedFile)
-                setConvertedFile(null)
-                setError('')
-              }}
-            />
 
-            {/* Selected File */}
-            {file && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6"
+            {/* Upload */}
+            {!file && (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                className="rounded-2xl border-2 border-dashed border-[#1D4533]/30 bg-[#F7EAE0]/50 p-7 text-center transition-colors duration-200 hover:border-[#1D4533]/60 sm:p-10"
               >
-                <div className="rounded-xl bg-[#F7EAE0] p-4">
-                  <div className="flex items-start gap-3">
-                    <FiImage
-                      className="mt-0.5 shrink-0 text-[#1D4533]"
-                      size={20}
-                    />
-
-                    <div className="min-w-0">
-                      <p className="break-all text-sm font-medium text-[#1D4533]">
-                        {file.name}
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-600">
-                        Original size:{' '}
-                        {(file.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                  </div>
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#1D4533] shadow-sm">
+                  <FiUploadCloud size={28} />
                 </div>
 
-                {/* Convert Button */}
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={convertToPng}
-                    disabled={isConverting}
-                    className="mt-7 inline-flex items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isConverting ? (
-                      <>
-                        <FiRefreshCw
-                          className="animate-spin"
-                          size={18}
-                        />
-                        Converting...
-                      </>
-                    ) : (
-                      <>
-                        <FiRefreshCw size={18} />
-                        Convert to PNG
-                      </>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
+                <h2 className="mt-5 text-xl font-semibold text-[#1D4533]">
+                  Upload your JPG image
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  Drag and drop your JPG image here, or choose it
+                  from your device.
+                </p>
+
+                <label className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:opacity-90">
+                  <FiUploadCloud size={18} />
+
+                  Choose JPG Image
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,.jpg,.jpeg"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+
+                <p className="mt-4 text-xs text-gray-500">
+                  JPG or JPEG · Maximum 20 MB
+                </p>
+              </div>
             )}
 
             {/* Error */}
             {error && (
-              <motion.p
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-5 rounded-lg bg-red-50 p-3 text-center text-sm font-medium text-red-600"
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 8,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
               >
                 {error}
-              </motion.p>
+              </motion.div>
             )}
 
-            {/* Result */}
-            {convertedFile && (
+            {/* Selected File */}
+            {file && !convertedUrl && (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 rounded-xl border border-[#F9D2BA] bg-[#F7EAE0] p-5 text-center"
+                initial={{
+                  opacity: 0,
+                  y: 15,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
               >
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#1D4533]">
-                  <FiCheckCircle size={23} />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[#1D4533]">
+                      Selected Image
+                    </h2>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Your JPG is ready to be converted to PNG.
+                    </p>
+                  </div>
+
+                  <span className="w-fit rounded-full bg-[#F7EAE0] px-3 py-1 text-sm font-medium text-[#1D4533]">
+                    {formatFileSize(file.size)}
+                  </span>
                 </div>
 
-                <p className="mt-4 text-lg font-semibold text-[#1D4533]">
-                  Conversion complete
-                </p>
+                {/* Preview */}
+                <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex min-h-56 items-center justify-center p-4 sm:min-h-72">
+                    <img
+                      src={previewUrl}
+                      alt={`Preview of ${file.name}`}
+                      className="max-h-72 max-w-full rounded-lg object-contain"
+                    />
+                  </div>
 
-                <p className="mt-2 text-sm text-gray-600">
-                  PNG size:{' '}
-                  {(convertedFile.size / 1024).toFixed(2)} KB
-                </p>
+                  <div className="flex flex-col gap-3 border-t border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F7EAE0] text-[#1D4533]">
+                        <FiImage size={18} />
+                      </div>
 
-                <button
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-medium text-gray-700">
+                          {file.name}
+                        </p>
+
+                        <p className="mt-1 text-xs text-gray-500">
+                          JPG image · {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg text-gray-500 transition hover:bg-red-50 hover:text-red-600 sm:self-auto"
+                      aria-label="Remove selected image"
+                    >
+                      <FiTrash2 size={17} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Convert Button */}
+                <motion.button
                   type="button"
-                  onClick={handleDownload}
-                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-[#5E3122] px-5 py-3 font-medium text-white transition hover:-translate-y-0.5 hover:opacity-90"
+                  onClick={convertToPng}
+                  disabled={isConverting}
+                  whileHover={
+                    !isConverting
+                      ? { y: -2 }
+                      : {}
+                  }
+                  whileTap={
+                    !isConverting
+                      ? { scale: 0.98 }
+                      : {}
+                  }
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3.5 font-medium text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <FiDownload size={18} />
-                  Download PNG
-                </button>
+                  {isConverting ? (
+                    <>
+                      <motion.span
+                        animate={{
+                          rotate: 360,
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      >
+                        <FiRefreshCw size={18} />
+                      </motion.span>
+
+                      Converting to PNG...
+                    </>
+                  ) : (
+                    <>
+                      <FiRefreshCw size={18} />
+                      Convert to PNG
+                    </>
+                  )}
+                </motion.button>
+
+                {isConverting && (
+                  <p className="mt-4 text-center text-sm text-gray-500">
+                    Please wait while your JPG is being converted.
+                  </p>
+                )}
+              </motion.div>
+            )}
+
+            {/* Success */}
+            {convertedUrl && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  scale: 0.98,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                transition={{
+                  duration: 0.4,
+                }}
+                className="py-4 text-center sm:py-6"
+              >
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#1D4533] text-white shadow-sm">
+                  <FiCheckCircle size={30} />
+                </div>
+
+                <h2 className="mt-5 text-2xl font-bold text-[#1D4533]">
+                  JPG Converted Successfully
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-lg leading-7 text-gray-600">
+                  Your PNG image is ready to download.
+                </p>
+
+                {/* Stats */}
+                <div className="mx-auto mt-7 grid max-w-xl gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-[#F7EAE0] p-4">
+                    <p className="text-xs text-gray-500">
+                      Original JPG
+                    </p>
+
+                    <p className="mt-1 font-semibold text-[#1D4533]">
+                      {formatFileSize(file?.size)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F7EAE0] p-4">
+                    <p className="text-xs text-gray-500">
+                      PNG Size
+                    </p>
+
+                    <p className="mt-1 font-semibold text-[#1D4533]">
+                      {formatFileSize(convertedSize)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Result Preview */}
+                <div className="mt-7 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex min-h-56 items-center justify-center p-4 sm:min-h-72">
+                    <img
+                      src={convertedUrl}
+                      alt="Converted PNG preview"
+                      className="max-h-72 max-w-full rounded-lg object-contain"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <motion.button
+                    type="button"
+                    onClick={downloadPng}
+                    whileHover={{
+                      y: -2,
+                    }}
+                    whileTap={{
+                      scale: 0.98,
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-[#1D4533] px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+                  >
+                    <FiDownload size={18} />
+                    Download PNG
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={resetConverter}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-[#1D4533] px-6 py-3 font-medium text-[#1D4533] transition hover:bg-gray-50"
+                  >
+                    <FiRefreshCw size={18} />
+                    Convert Another JPG
+                  </button>
+                </div>
               </motion.div>
             )}
           </motion.div>
 
           {/* SEO Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.5 }}
-            className="mt-14"
+          <motion.section
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+            transition={{
+              duration: 0.5,
+            }}
+            className="mt-12 rounded-2xl border border-[#F9D2BA] bg-white p-6 shadow-sm sm:p-8"
           >
-            <h2 className="text-2xl font-bold text-[#1D4533] sm:text-3xl">
-              Convert JPG to PNG Online for Free
+            <h2 className="text-2xl font-bold text-[#1D4533]">
+              Convert JPG to PNG Online
             </h2>
 
             <p className="mt-4 leading-7 text-gray-600">
-              Pixora JPG to PNG Converter lets you convert JPG images
-              into PNG files directly in your browser. The conversion
-              keeps the original image dimensions while changing the
-              output format to PNG.
+              Pixora's JPG to PNG converter lets you convert JPG and
+              JPEG images into PNG files directly in your browser.
+              The conversion keeps the original image dimensions while
+              changing the output format to PNG.
             </p>
 
-            <h2 className="mt-8 text-2xl font-bold text-[#1D4533]">
+            <h3 className="mt-8 text-xl font-semibold text-[#1D4533]">
               How to Convert JPG to PNG
-            </h2>
+            </h3>
 
-            <div className="mt-5 space-y-3">
-              {[
-                'Choose a JPG image from your device.',
-                'Click Convert to PNG.',
-                'Wait for the browser-based conversion to finish.',
-                'Download your converted PNG image.',
-              ].map((step, index) => (
-                <div
-                  key={step}
-                  className="flex items-start gap-3"
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F7EAE0] text-sm font-semibold text-[#1D4533]">
-                    {index + 1}
-                  </span>
+            <ol className="mt-4 space-y-3 text-gray-600">
+              <li>
+                <span className="font-semibold text-[#1D4533]">
+                  1.
+                </span>{' '}
+                Upload a JPG or JPEG image.
+              </li>
 
-                  <p className="pt-0.5 text-gray-600">
-                    {step}
-                  </p>
-                </div>
-              ))}
+              <li>
+                <span className="font-semibold text-[#1D4533]">
+                  2.
+                </span>{' '}
+                Preview your selected image.
+              </li>
+
+              <li>
+                <span className="font-semibold text-[#1D4533]">
+                  3.
+                </span>{' '}
+                Click Convert to PNG.
+              </li>
+
+              <li>
+                <span className="font-semibold text-[#1D4533]">
+                  4.
+                </span>{' '}
+                Download your converted PNG image.
+              </li>
+            </ol>
+
+            <h3 className="mt-8 text-xl font-semibold text-[#1D4533]">
+              Why Convert JPG to PNG?
+            </h3>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="flex items-start gap-3 rounded-xl bg-[#F7EAE0] p-4">
+                <FiCheckCircle
+                  className="mt-0.5 shrink-0 text-[#1D4533]"
+                  size={18}
+                />
+
+                <p className="text-sm leading-6 text-gray-700">
+                  Create PNG versions of your existing JPG images.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-[#F7EAE0] p-4">
+                <FiCheckCircle
+                  className="mt-0.5 shrink-0 text-[#1D4533]"
+                  size={18}
+                />
+
+                <p className="text-sm leading-6 text-gray-700">
+                  Keep the original image dimensions during conversion.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-[#F7EAE0] p-4">
+                <FiCheckCircle
+                  className="mt-0.5 shrink-0 text-[#1D4533]"
+                  size={18}
+                />
+
+                <p className="text-sm leading-6 text-gray-700">
+                  Convert images directly inside your browser.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-[#F7EAE0] p-4">
+                <FiCheckCircle
+                  className="mt-0.5 shrink-0 text-[#1D4533]"
+                  size={18}
+                />
+
+                <p className="text-sm leading-6 text-gray-700">
+                  Download the converted PNG immediately.
+                </p>
+              </div>
             </div>
 
-            <h2 className="mt-8 text-2xl font-bold text-[#1D4533]">
-              JPG and PNG Image Formats
-            </h2>
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#F9D2BA] bg-[#F7EAE0]/60 p-4">
+              <FiInfo
+                className="mt-0.5 shrink-0 text-[#1D4533]"
+                size={18}
+              />
 
-            <p className="mt-4 leading-7 text-gray-600">
-              JPG is commonly used for photographs and other images
-              where smaller file sizes are useful. PNG is another
-              popular image format that can preserve lossless image
-              data and transparency. Pixora makes it easy to convert
-              a JPG image into PNG format when you need a PNG file.
-            </p>
-          </motion.div>
+              <p className="text-sm leading-6 text-gray-700">
+                PNG files can sometimes be larger than JPG files
+                because PNG uses lossless compression. The final file
+                size depends on the image content and dimensions.
+              </p>
+            </div>
+          </motion.section>
 
           {/* Related Tools */}
-          <div className="mt-14 border-t border-[#F9D2BA] pt-10">
-            <h2 className="text-2xl font-bold text-[#1D4533]">
-              Related Image Tools
-            </h2>
+          <motion.section
+            initial={{
+              opacity: 0,
+              y: 20,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+            transition={{
+              duration: 0.5,
+            }}
+            className="mt-12"
+          >
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-[#1D4533]">
+                More Image Tools
+              </h2>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <p className="mt-2 text-gray-600">
+                Try more useful image tools from Pixora.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
 
               <Link
                 to="/tools/image-compressor"
-                className="group rounded-xl border border-[#F9D2BA] bg-white p-4 transition hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <h3 className="font-semibold text-[#1D4533]">
+                <FiImage
+                  className="mx-auto text-[#1D4533]"
+                  size={24}
+                />
+
+                <h3 className="mt-3 font-semibold text-[#1D4533]">
                   Image Compressor
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Reduce image file size while keeping good quality.
+                <p className="mt-1 text-sm text-gray-600">
+                  Reduce image file size while keeping useful quality.
                 </p>
 
-                <FiRefreshCw
-                  size={18}
-                  className="mt-4 text-[#1D4533] transition-transform group-hover:translate-x-1"
-                />
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
 
               <Link
                 to="/tools/image-resizer"
-                className="group rounded-xl border border-[#F9D2BA] bg-white p-4 transition hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <h3 className="font-semibold text-[#1D4533]">
+                <FiImage
+                  className="mx-auto text-[#1D4533]"
+                  size={24}
+                />
+
+                <h3 className="mt-3 font-semibold text-[#1D4533]">
                   Image Resizer
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Resize your image dimensions quickly.
+                <p className="mt-1 text-sm text-gray-600">
+                  Resize images to your preferred dimensions.
                 </p>
 
-                <FiRefreshCw
-                  size={18}
-                  className="mt-4 text-[#1D4533] transition-transform group-hover:translate-x-1"
-                />
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
 
               <Link
                 to="/tools/webp-converter"
-                className="group rounded-xl border border-[#F9D2BA] bg-white p-4 transition hover:-translate-y-1 hover:shadow-md"
+                className="group rounded-xl border border-[#F9D2BA] bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <h3 className="font-semibold text-[#1D4533]">
+                <FiImage
+                  className="mx-auto text-[#1D4533]"
+                  size={24}
+                />
+
+                <h3 className="mt-3 font-semibold text-[#1D4533]">
                   WebP Converter
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-gray-600">
-                  Convert images to WebP format.
+                <p className="mt-1 text-sm text-gray-600">
+                  Convert images to the WebP format.
                 </p>
 
-                <FiRefreshCw
-                  size={18}
-                  className="mt-4 text-[#1D4533] transition-transform group-hover:translate-x-1"
-                />
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#1D4533]">
+                  Open Tool
+
+                  <FiArrowRight
+                    size={15}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
 
             </div>
-          </div>
+          </motion.section>
 
         </div>
       </section>
