@@ -4,9 +4,11 @@ function ToolPageSEO({
   title,
   description,
 }) {
+  const pageTitle = `${title} | Pixora`
+
   return (
     <SEO
-      title={`${title} | Pixora`}
+      title={pageTitle}
       description={description}
     />
   )

@@ -4,6 +4,22 @@ function SEO({ title, description }) {
   const canonicalUrl =
     window.location.origin + window.location.pathname
 
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Pixora',
+    url: canonicalUrl,
+    description,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+  }
+
   return (
     <Helmet>
       {/* Basic SEO */}
@@ -78,6 +94,11 @@ function SEO({ title, description }) {
         name="twitter:description"
         content={description}
       />
+
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
     </Helmet>
   )
 }
