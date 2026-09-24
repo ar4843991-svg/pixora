@@ -287,7 +287,7 @@ function ImageCompressor() {
     <>
       <ToolPageSEO
         title="Image Compressor"
-        description="Compress JPG, PNG and WebP images online for free with Pixora. Reduce image file size directly in your browser while keeping good image quality."
+        description="Compress JPG, PNG and WebP images online for free with Pixora. Reduce image file size directly in your browser while keeping useful image quality."
       />
 
       <section className="px-4 py-14 sm:py-18 lg:py-20">
@@ -346,8 +346,8 @@ function ImageCompressor() {
             </h1>
 
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
-              Reduce image file size quickly while keeping your
-              images looking clear and useful.
+              Reduce JPG, PNG and WebP file sizes quickly while
+              keeping useful image quality.
             </p>
           </motion.div>
 
@@ -700,14 +700,21 @@ function ImageCompressor() {
             className="mt-12 rounded-2xl border border-[#F9D2BA] bg-white p-6 shadow-sm sm:p-8"
           >
             <h2 className="text-2xl font-bold text-[#1D4533]">
-              Compress Images Online
+              Free Image Compressor Online
             </h2>
 
             <p className="mt-4 leading-7 text-gray-600">
-              Pixora's image compressor helps reduce the file size of
-              JPG, PNG and WebP images directly in your browser. Smaller
-              image files can be easier to upload, share and store while
-              keeping useful image quality.
+              Pixora is a free online image compressor for reducing the
+              file size of JPG, PNG and WebP images. Compressing an image
+              can make it easier to upload, share and store while helping
+              you keep the image at a useful quality level.
+            </p>
+
+            <p className="mt-4 leading-7 text-gray-600">
+              Upload an image, adjust the compression quality and let
+              Pixora process it directly in your browser. The tool shows
+              the original and compressed file sizes so you can see how
+              much the file size changed before downloading the result.
             </p>
 
             <h3 className="mt-8 text-xl font-semibold text-[#1D4533]">
@@ -740,7 +747,7 @@ function ImageCompressor() {
                 <span className="font-semibold text-[#1D4533]">
                   4.
                 </span>{' '}
-                Download your compressed image.
+                Review the result and download your compressed image.
               </li>
             </ol>
 
@@ -756,7 +763,7 @@ function ImageCompressor() {
                 />
 
                 <p className="text-sm leading-6 text-gray-700">
-                  Reduce image file sizes for easier sharing.
+                  Reduce image file sizes for easier sharing and uploads.
                 </p>
               </div>
 
@@ -767,7 +774,7 @@ function ImageCompressor() {
                 />
 
                 <p className="text-sm leading-6 text-gray-700">
-                  Make images easier to upload and store.
+                  Make large images easier to store and transfer.
                 </p>
               </div>
 
@@ -789,7 +796,7 @@ function ImageCompressor() {
                 />
 
                 <p className="text-sm leading-6 text-gray-700">
-                  Compress images directly in your browser.
+                  Process images directly in your browser.
                 </p>
               </div>
             </div>
@@ -802,8 +809,75 @@ function ImageCompressor() {
 
               <p className="text-sm leading-6 text-gray-700">
                 Compression results can vary depending on the image
-                format, dimensions and original file size.
+                format, dimensions, quality setting and original file
+                size.
               </p>
+            </div>
+
+            {/* FAQ */}
+            <div className="mt-10 border-t border-[#F9D2BA] pt-8">
+              <h3 className="text-xl font-semibold text-[#1D4533]">
+                Frequently Asked Questions
+              </h3>
+
+              <div className="mt-5 space-y-4">
+                <details className="rounded-xl bg-[#F7EAE0] p-4">
+                  <summary className="cursor-pointer font-semibold text-[#1D4533]">
+                    Can I compress JPG, PNG and WebP images?
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    Yes. Pixora supports JPG, PNG and WebP image files
+                    up to 20 MB.
+                  </p>
+                </details>
+
+                <details className="rounded-xl bg-[#F7EAE0] p-4">
+                  <summary className="cursor-pointer font-semibold text-[#1D4533]">
+                    Does image compression reduce quality?
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    Compression can reduce some image detail depending
+                    on the selected quality level. You can adjust the
+                    quality setting before processing the image.
+                  </p>
+                </details>
+
+                <details className="rounded-xl bg-[#F7EAE0] p-4">
+                  <summary className="cursor-pointer font-semibold text-[#1D4533]">
+                    How large can my image be?
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    The current Pixora image compressor accepts images
+                    up to 20 MB.
+                  </p>
+                </details>
+
+                <details className="rounded-xl bg-[#F7EAE0] p-4">
+                  <summary className="cursor-pointer font-semibold text-[#1D4533]">
+                    Can I use the image compressor on my phone?
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    Yes. The compressor interface is designed to work
+                    in modern desktop and mobile browsers.
+                  </p>
+                </details>
+
+                <details className="rounded-xl bg-[#F7EAE0] p-4">
+                  <summary className="cursor-pointer font-semibold text-[#1D4533]">
+                    What happens after compression?
+                  </summary>
+
+                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                    Pixora shows the compressed image and compares its
+                    size with the original file. You can then download
+                    the compressed result or compress another image.
+                  </p>
+                </details>
+              </div>
             </div>
           </motion.section>
 
@@ -832,7 +906,7 @@ function ImageCompressor() {
               </h2>
 
               <p className="mt-2 text-gray-600">
-                Try more useful image tools from Pixora.
+                Continue working with more free image tools from Pixora.
               </p>
             </div>
 
